@@ -33,7 +33,13 @@ namespace PackTracker.Controls
                 }
             };
 
-            Loaded += (sender, e) => this.dd_Packs.DataContext = History;
+            Loaded += (sender, e) =>
+            {
+                // Ensure ShowAllPacks is set before assigning the DataContext so the
+                // PackDropDown populates with every known pack (including Cataclysm).
+                this.dd_Packs.ShowAllPacks = true;
+                this.dd_Packs.DataContext = History;
+            };
             this.dd_Packs.Focus();
         }
     }

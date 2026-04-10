@@ -68,6 +68,10 @@ namespace PackTracker.Controls
 
         private void AddLogs(IEnumerable<Pack> Packs)
         {
+            if (Packs == null)
+            {
+                return;
+            }
             var sb = new StringBuilder();
             var DateTimeConverter = new DateTimeConverter();
             var PackNameConverter = new PackNameConverter();
@@ -75,18 +79,23 @@ namespace PackTracker.Controls
 
             foreach (var Pack in Packs)
             {
-                sb.Clear();
+                if (Pack == null)
+                {
+                    continue;
+                }
 
+                var cards = Pack.Cards ?? new System.Collections.Generic.List<Entity.Card>();
+                sb.Clear();
                 var date = DateTimeConverter.Convert(Pack.Time, null, null, null).ToString();
                 var packname = PackNameConverter.Convert(Pack.Id, null, null, null).ToString();
-                var commons = Pack.Cards.Count(x => x.Rarity == Rarity.COMMON);
-                var commonGolds = commons > 0 ? Pack.Cards.Count(x => x.Premium && x.Rarity == Rarity.COMMON) : 0;
-                var rares = Pack.Cards.Count(x => x.Rarity == Rarity.RARE);
-                var rareGolds = rares > 0 ? Pack.Cards.Count(x => x.Premium && x.Rarity == Rarity.RARE) : 0;
-                var epics = Pack.Cards.Count(x => x.Rarity == Rarity.EPIC);
-                var epicGolds = epics > 0 ? Pack.Cards.Count(x => x.Premium && x.Rarity == Rarity.EPIC) : 0;
-                var legendarys = Pack.Cards.Count(x => x.Rarity == Rarity.LEGENDARY);
-                var legendaryGolds = legendarys > 0 ? Pack.Cards.Count(x => x.Premium && x.Rarity == Rarity.LEGENDARY) : 0;
+                var commons = cards.Count(x => x.Rarity == Rarity.COMMON);
+                var commonGolds = commons > 0 ? cards.Count(x => x.Premium && x.Rarity == Rarity.COMMON) : 0;
+                var rares = cards.Count(x => x.Rarity == Rarity.RARE);
+                var rareGolds = rares > 0 ? cards.Count(x => x.Premium && x.Rarity == Rarity.RARE) : 0;
+                var epics = cards.Count(x => x.Rarity == Rarity.EPIC);
+                var epicGolds = epics > 0 ? cards.Count(x => x.Premium && x.Rarity == Rarity.EPIC) : 0;
+                var legendarys = cards.Count(x => x.Rarity == Rarity.LEGENDARY);
+                var legendaryGolds = legendarys > 0 ? cards.Count(x => x.Premium && x.Rarity == Rarity.LEGENDARY) : 0;
 
                 var Color = null as SolidColorBrush;
                 if (legendarys > 0)
@@ -124,7 +133,10 @@ namespace PackTracker.Controls
                 this.AddGoldStars(legendaryGolds, Color, sb);
 
                 sb.AppendLine(")");
-                this.txt_Log.Inlines.Add(new Run(sb.ToString()) { Foreground = Color });
+                if (this.txt_Log != null)
+                {
+                    this.txt_Log.Inlines.Add(new Run(sb.ToString()) { Foreground = Color });
+                }
             }
 
             this.sv_Scrollbar.ScrollToEnd();
@@ -134,10 +146,15 @@ namespace PackTracker.Controls
         {
             if (amount > 0)
             {
-                this.txt_Log.Inlines.Add(new Run(sb.ToString()) { Foreground = Color });
+                if (this.txt_Log != null)
+                {
+                    this.txt_Log.Inlines.Add(new Run(sb.ToString()) { Foreground = Color });
+                }
                 sb.Clear().Append('*', amount);
-
-                this.txt_Log.Inlines.Add(new Run(sb.ToString()) { Foreground = Brushes.Gold });
+                if (this.txt_Log != null)
+                {
+                    this.txt_Log.Inlines.Add(new Run(sb.ToString()) { Foreground = Brushes.Gold });
+                }
                 sb.Clear();
             }
         }

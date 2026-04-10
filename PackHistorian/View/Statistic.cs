@@ -47,7 +47,14 @@ namespace PackTracker.View
         public Statistic(int packId, History History)
         {
             this._packId = packId;
-            this._packs = new List<Pack>(History.Where(x => x.Id == packId));
+
+            // Build initial pack list. Include packs that either have the explicit pack id
+            // or (for certain pack ids) match by card content (historical no-id packs).
+            this._packs = new List<Pack>(History.Where(x =>
+                x.Id == packId
+                || (ManualPackInsert.AllowHistoryFallbackForPack(packId) && PackMatchesByCards(x, packId))
+                || (packId == 1058 && IsHistoricGoldenCataclysm(x))
+            ));
 
             foreach (var Pack in this._packs)
             {
@@ -63,7 +70,7 @@ namespace PackTracker.View
                 {
                     foreach (Pack Pack in e.NewItems)
                     {
-                        if (Pack.Id == this._packId)
+                        if (Pack.Id == this._packId || (ManualPackInsert.AllowHistoryFallbackForPack(this._packId) && PackMatchesByCards(Pack, this._packId)) || (this._packId == 1058 && IsHistoricGoldenCataclysm(Pack)))
                         {
                             this._packs.Add(Pack);
                             this.CountRarity(Pack);
@@ -104,6 +111,53 @@ namespace PackTracker.View
 
                 PackWatcher.UpdateGranted();
             };
+        }
+
+        private static bool PackMatchesByCards(Pack pack, int packId)
+        {
+            try
+            {
+                foreach (var c in pack.Cards)
+                {
+                    var dbCard = HearthDb.Cards.GetFromDbfId(c.HDTCard.DbfId);
+                    if (dbCard != null && ManualPackInsert.CardMatchesPackId(packId, dbCard))
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+
+            return false;
+        }
+
+        private static bool IsHistoricGoldenCataclysm(Pack pack)
+        {
+            try
+            {
+                if (pack.Cards == null) return false;
+                if (pack.Cards.Count() != 5) return false;
+                if (!pack.Cards.All(c => c.Premium)) return false;
+
+                // If any card matches the Cataclysm filter (1057), consider this a historic golden Cataclysm
+                foreach (var c in pack.Cards)
+                {
+                    var dbCard = HearthDb.Cards.GetFromDbfId(c.HDTCard.DbfId);
+                    if (dbCard != null && ManualPackInsert.CardMatchesPackId(1057, dbCard))
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+
+            return false;
         }
 
         private void CountRarity(Pack Pack)

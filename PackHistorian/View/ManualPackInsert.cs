@@ -81,7 +81,7 @@ namespace PackTracker.View
 
         private readonly Dictionary<int, List<HDTCard>> _setsCache = new Dictionary<int, List<HDTCard>>();
 
-        internal static readonly List<int> GoldenPacks = new List<int> { 23, 603, 643, 686, 716, 737, 841, 850, 874, 904, 921, 932, 937, 938, 939, 945, 952, 970, 977, 985, 986, 990, 1040, 1045, 1055 };
+        internal static readonly List<int> GoldenPacks = new List<int> { 23, 603, 643, 686, 716, 737, 841, 850, 874, 904, 921, 932, 937, 938, 939, 945, 952, 970, 977, 985, 986, 990, 1040, 1045, 1055, 1058 };
         private static readonly Dictionary<int, Func<HearthDb.Card, bool>> _filter = new Dictionary<int, Func<HearthDb.Card, bool>>
         {
             [1] = card => card.Set == CardSet.EXPERT1,
@@ -170,7 +170,44 @@ namespace PackTracker.View
             [1046] = card => card.Set is CardSet.WHIZBANGS_WORKSHOP or CardSet.ISLAND_VACATION or CardSet.SPACE or CardSet.EMERALD_DREAM,
             [1055] = card => card.Set == CardSet.TIME_TRAVEL,
             [1056] = card => card.Set is CardSet.WHIZBANGS_WORKSHOP or CardSet.ISLAND_VACATION or CardSet.SPACE or CardSet.EMERALD_DREAM or CardSet.THE_LOST_CITY,
+            [1057] = card => card.Set == CardSet.CATACLYSM,
+            [1058] = card => card.Set == CardSet.CATACLYSM,
+            [1059] = card => card.Set == CardSet.CATACLYSM,
         };
+
+        /// <summary>
+        /// Returns true if the provided HearthDb.Card matches the filter for the given pack id.
+        /// This is used by other components (eg. PityTimer) to determine whether a historical pack
+        /// that doesn't have a matching pack id should still be treated as the given pack type.
+        /// </summary>
+        internal static bool CardMatchesPackId(int packId, HearthDb.Card card)
+        {
+            if (card == null) return false;
+            if (!_filter.ContainsKey(packId)) return false;
+            try
+            {
+                return _filter[packId](card);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Returns true if we should attempt to match historical packs by inspecting their cards
+        /// for the given pack id. This is intentionally conservative: only enable the fallback
+        /// for Cataclysm-related pack ids so old, no-id history entries won't accidentally
+        /// count towards other expansions' pity timers.
+        /// </summary>
+        internal static bool AllowHistoryFallbackForPack(int packId)
+        {
+            // Only allow history-card-based matching for the regular Cataclysm pack id (1057).
+            // We intentionally exclude golden/catch-up ids so that golden pity timers and
+            // golden statistics are computed only from packs that were explicitly marked
+            // as golden in history (have the golden pack id).
+            return packId == 1057;
+        }
 
         public ManualPackInsert()
         {

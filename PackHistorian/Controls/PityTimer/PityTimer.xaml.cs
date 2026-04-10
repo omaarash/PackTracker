@@ -16,6 +16,8 @@ namespace PackTracker.Controls.PityTimer
             this.InitializeComponent();
 
             this._pityTimers = PityTimers;
+            // Only show relevant packs for this pity timer UI (Lost City, Golden Lost City, Across the Timeways, Golden Across the Timeways, Cataclysm, Golden Cataclysm)
+            this.dd_Packs.AllowedPackIds = new System.Collections.Generic.List<int> { 982, 1040, 989, 1055, 1057, 1058 };
 
             this.dd_Packs.SelectionChanged += (sender, e) =>
             {
